@@ -9,7 +9,7 @@
 	so that they all run at the same time. (Takes a minute.)
 
 		use [PerformanceExperiment];
-		exec [dbo].[p_RunProcessMessages];
+		exec [dbo].[p_RunProcessTransactions];
 
 	Once they're all done, run the following to check the results.
 
@@ -27,8 +27,8 @@
 	drop proc if exists [dbo].[p_StartLogging];
 	drop proc if exists [dbo].[p_EndLogging];
 	drop proc if exists [dbo].[p_PerformanceReport];
-	drop proc if exists [dbo].[p_ProcessMessages];
-	drop proc if exists [dbo].[p_RunProcessMessages];
+	drop proc if exists [dbo].[p_ProcessTransactions];
+	drop proc if exists [dbo].[p_RunProcessTransactions];
 	drop proc if exists [dbo].[p_StageFakeTransactions];
 	drop table if exists [dbo].[AppSetting];
 	drop table if exists [dbo].[Staging];
@@ -93,7 +93,7 @@ update [dbo].[User] set IsProcessing = 0 where IsProcessing = 1;
 go
 
 -- ============================================================================
--- TABLES AND DATA
+-- STAGING
 -- ============================================================================
 
 create table [dbo].[Staging] (
@@ -105,49 +105,6 @@ create table [dbo].[Staging] (
 	StagingValue varchar(200) not null,
 	ProcessDate datetime null
 );
-go
-
-create table [dbo].[Transaction] (
-	TransactionID int not null
-		identity 
-		primary key,
-	UserID tinyint not null 
-		references [dbo].[User] (UserID),
-	TransactionValue varchar(200) not null
-);
-go
-
--- drop table [dbo].[Log];
--- truncate table [dbo].[Log];
-if OBJECT_ID('[dbo].[Log]') is null
-	create table [dbo].[Log] (
-		LogID int identity primary key,
-		UserID tinyint not null,
-		[RowCount] int not null,
-		SPID int not null,
-		StartTime datetime2(7) not null default sysdatetime(),
-		EndTime datetime2(7) null,
-		SelectCount int null,
-		UpdateCount int null
-	);
-go
-
--- ============================================================================
--- MOSTLY PROCS
--- ============================================================================
-
-create or alter proc [dbo].[p_StartLogging] (@UserID tinyint, @RowCount int) as;
-	insert [dbo].[Log] (UserID, [RowCount], SPID) values (@UserID, @RowCount, @@SPID);
-
-	return scope_identity();
-go
-
-create or alter proc [dbo].[p_EndLogging] (
-	@LogID int, @SelectCount int, @UpdateCount int
-) as;
-	update [dbo].[Log] 
-	set EndTime = SYSDATETIME(), SelectCount = @SelectCount, UpdateCount = @UpdateCount 
-	where LogID = @LogID;
 go
 
 create or alter proc [dbo].[p_StageFakeTransactions] (
@@ -183,6 +140,39 @@ while (select sum(rows) from sys.partitions where object_id = OBJECT_ID('dbo.Sta
 go
 
 update [dbo].[Staging] set ProcessDate = null where ProcessDate is not null;
+go
+
+-- ============================================================================
+-- LOGGING
+-- ============================================================================
+
+-- drop table [dbo].[Log];
+-- truncate table [dbo].[Log];
+if OBJECT_ID('[dbo].[Log]') is null
+	create table [dbo].[Log] (
+		LogID int identity primary key,
+		UserID tinyint not null,
+		[RowCount] int not null,
+		SPID int not null,
+		StartTime datetime2(7) not null default sysdatetime(),
+		EndTime datetime2(7) null,
+		SelectCount int null,
+		UpdateCount int null
+	);
+go
+
+create or alter proc [dbo].[p_StartLogging] (@UserID tinyint, @RowCount int) as;
+	insert [dbo].[Log] (UserID, [RowCount], SPID) values (@UserID, @RowCount, @@SPID);
+
+	return scope_identity();
+go
+
+create or alter proc [dbo].[p_EndLogging] (
+	@LogID int, @SelectCount int, @UpdateCount int
+) as;
+	update [dbo].[Log] 
+	set EndTime = SYSDATETIME(), SelectCount = @SelectCount, UpdateCount = @UpdateCount 
+	where LogID = @LogID;
 go
 
 create or alter proc [dbo].[p_PerformanceReport] as;
@@ -221,11 +211,29 @@ create or alter proc [dbo].[p_PerformanceReport] as;
 	group by r.Run;
 go
 
-create or alter proc [dbo].[p_ProcessMessages] (@UserID int) as;
+-- ============================================================================
+-- TRANSACTION TABLE
+-- ============================================================================
+
+create table [dbo].[Transaction] (
+	TransactionID int not null
+		identity 
+		primary key,
+	UserID tinyint not null 
+		references [dbo].[User] (UserID),
+	TransactionValue varchar(200) not null
+);
+go
+
+-- ============================================================================
+-- PROCESS MESSAGE PROCS
+-- ============================================================================
+
+create or alter proc [dbo].[p_ProcessTransactions] (@UserID int) as;
 	/*
 		Copy rows from Staging to Transaction and then mark the rows as processed.
 
-		exec [dbo].[p_ProcessMessages] 1;
+		exec [dbo].[p_ProcessTransactions] 1;
 	*/
 	set nocount on;
 
@@ -277,7 +285,7 @@ create or alter proc [dbo].[p_ProcessMessages] (@UserID int) as;
 	exec [dbo].[p_StageFakeTransactions] @RowCount, @UserID;
 go
 
-create or alter proc [dbo].[p_RunProcessMessages] as;
+create or alter proc [dbo].[p_RunProcessTransactions] as;
 	/*
 		Claim a user douring processing.
 		Keep processing until time runs out.
@@ -293,7 +301,7 @@ create or alter proc [dbo].[p_RunProcessMessages] as;
 	where IsProcessing = 0;
 
 	while @End > sysdatetime()
-		exec [dbo].[p_ProcessMessages] @UserID;
+		exec [dbo].[p_ProcessTransactions] @UserID;
 
 	update [dbo].[User] set IsProcessing = 0 where UserID = @UserID;
 go
