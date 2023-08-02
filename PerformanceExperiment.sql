@@ -57,15 +57,16 @@ go
 CREATE TABLE [dbo].[AppSetting] (AppSettingName sysname PRIMARY KEY, AppSettingValue int not null);
 GO
 
+-- The settings
 insert [dbo].[AppSetting] values
 	('NUMBER OF USERS', 5), -- tinyint. More users mean more sessions.
 	('RUN SECONDS LIMIT', 60), -- How long should the test run.
 	('SECONDS BETWEEN RUNS', 80), -- For spotting individual runs. must be more than limit.
-	('PROCESS TRANSACTIONS ROW COUNT', 10e3), -- 10e3 is 10K. Rows processed in each loop.
-	('REPORTING FREQUENCY', 50); -- How oftern to run p_LocksAndBlocks.
+	('PROCESS TRANSACTIONS ROW COUNT', 10e3) -- 10e3 is 10K. Rows processed in each loop.
 go
 
 create or alter function [dbo].[p_GetAppSetting] (@AppSettingName sysname) returns int begin;
+	-- Get those settings
 	return (
 		select AppSettingValue 
 		from [dbo].[AppSetting] with (nolock) 
@@ -86,10 +87,6 @@ GO
 
 insert [dbo].[User] (UserID)
 select value from generate_series(1, [dbo].[p_GetAppSetting]('NUMBER OF USERS'))
-except
-select UserID from [dbo].[User];
-
-update [dbo].[User] set IsProcessing = 0 where IsProcessing = 1;
 go
 
 -- ============================================================================
@@ -137,9 +134,6 @@ declare @RowCount int = 1e6; -- 1e6 is 1 million. Staging 1 million rows takes a
 
 while (select sum(rows) from sys.partitions where object_id = OBJECT_ID('dbo.Staging')) < @RowCount
 	exec [dbo].[p_StageFakeTransactions];
-go
-
-update [dbo].[Staging] set ProcessDate = null where ProcessDate is not null;
 go
 
 -- ============================================================================
