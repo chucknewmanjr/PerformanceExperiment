@@ -3,7 +3,7 @@
 	========================== PERFORMANCE EXPERIMENT =========================
 	Try to make this run faster and without adding issues like deadlocks.
 	Change procs, indexing or values. But avoid changing the columns in tables.
-	Requires SQL Server 2022 (V16).
+	Requires SQL Server 2019 (V15).
 	To test it, run this script. (Takes a couple minutes.)
 	And then run the following statement in 5 query windows
 	so that they all run at the same time. (Takes a minute.)
@@ -21,21 +21,11 @@
 	===========================================================================
 */
 
-/*
-	-- drop everything
-	USE [PerformanceExperiment];
-	drop proc if exists [dbo].[p_StartLogging];
-	drop proc if exists [dbo].[p_EndLogging];
-	drop proc if exists [dbo].[p_PerformanceReport];
-	drop proc if exists [dbo].[p_ProcessTransactions];
-	drop proc if exists [dbo].[p_RunProcessTransactions];
-	drop proc if exists [dbo].[p_StageFakeTransactions];
-	drop table if exists [dbo].[AppSetting];
-	drop table if exists [dbo].[Staging];
-	drop table if exists [dbo].[Transaction];
-	drop table if exists [dbo].[User];
-	-- drop table if exists [dbo].[Log];
---*/
+USE [master]
+GO
+
+if DB_ID('PerformanceExperiment') is null CREATE DATABASE [PerformanceExperiment];
+go
 
 USE [PerformanceExperiment];
 GO
@@ -85,8 +75,17 @@ CREATE TABLE [dbo].[User] (
 );
 GO
 
+-- -- SQL Server V16/2022
+--insert [dbo].[User] (UserID)
+--select value from generate_series(1, [dbo].[p_GetAppSetting]('NUMBER OF USERS'));
+
+with t(x) as (
+	select 1 
+	union all 
+	select x + 1 from t where x < [dbo].[p_GetAppSetting]('NUMBER OF USERS')
+)
 insert [dbo].[User] (UserID)
-select value from generate_series(1, [dbo].[p_GetAppSetting]('NUMBER OF USERS'))
+select x from t;
 go
 
 -- ============================================================================
