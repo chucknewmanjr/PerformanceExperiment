@@ -17,3 +17,10 @@ Once they're all done, run the following to check the results.
 
 After that, make some improvements and repeat the process.
 
+```mermaid
+  graph TD;
+      A-->B;
+      A-->C;
+      B-->D;
+      C-->D;
+```
