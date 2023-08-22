@@ -10,8 +10,15 @@ Once they're all done, run the following to check the results.
 		use [PerformanceExperiment];
 		exec [dbo].[p_PerformanceReport];
 
-## Chalenge
-After that, make some improvements and repeat the process.
+## Challenge
+After that, make some improvements and repeat the process. You can change procs, indexing, isolation levels, and such. But don't change the following:
+* Columns.
+* The insert and update must be in a transaction together.
+
+## What the code does
+
+
+
 
 ```mermaid
   graph TD;
