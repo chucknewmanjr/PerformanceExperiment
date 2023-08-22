@@ -11,12 +11,12 @@ Once they're all done, run the following to check the results.
 		exec [dbo].[p_PerformanceReport];
 
 ## Challenge
-After that, make some improvements and repeat the process. You can change procs, indexing, isolation levels, and such. But don't change the following:
-* Columns.
+After that, make improvements and repeat the process. You can change procs, indexing, isolation levels, and such. But there are limits:
+* Don't change the columns.
 * The insert and update must be in a transaction together.
 
 ## What the code does
-
+The code transferes rows from staging to transaction. But each session is for a different user.
 
 
 
