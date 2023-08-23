@@ -20,8 +20,8 @@ The code transferes rows from staging to transaction. But each session is for a 
 
 ```mermaid
 	graph BT;
-	a[AppSetting];
 	b[Staging] --> u[User]
 	c[Transaction] --> u[User]
 	d[ExecutionLog] --> u[User]
+	a[AppSetting];
 ```
