@@ -16,14 +16,12 @@ After that, make improvements and repeat the process. You can change procs, inde
 * The insert and update must be in a transaction together.
 
 ## What the code does
-The code transferes rows from staging to transaction. But each session is for a different user. So one session does not touch the rows that are for another session. The perpose of this is entirely fictitional. It's intended to imitate a common concurrent execution situation. 
-
-
+The code transferes rows from staging to transaction. But each session is for a different user. So one session does not touch the rows that are for another session. The perpose of this is entirely fictitional. It's intended to imitate a common concurrent execution situation. After it transfers some rows, it updates those rows in staging so that they don't get transfered again. That insert and update are together in a transaction.
 
 ```mermaid
-  graph TD;
-      A-->B;
-      A-->C;
-      B-->D;
-      C-->D;
+	graph TD;
+	a[AppSetting];
+	b[Staging] --> u[User]
+	c[Transaction] --> u[User]
+	d[ExecutionLog] --> u[User]
 ```
