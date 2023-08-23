@@ -16,7 +16,7 @@ After that, make improvements and repeat the process. You can change procs, inde
 * The insert and update must be in a transaction together.
 
 ## What the code does
-The code transferes rows from staging to transaction. But each session is for a different user.
+The code transferes rows from staging to transaction. But each session is for a different user. So one session does not touch the rows that are for another session. The perpose of this is entirely fictitional. It's intended to imitate a common concurrent execution situation. 
 
 
 
