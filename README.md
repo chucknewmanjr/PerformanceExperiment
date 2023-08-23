@@ -25,3 +25,6 @@ The code transferes rows from staging to transaction. But each session is for a 
 	d[ExecutionLog] --> u[User]
 	a[AppSetting];
 ```
+
+## Change ideas
+asdf asdf
