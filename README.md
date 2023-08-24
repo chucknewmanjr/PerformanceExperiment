@@ -27,4 +27,9 @@ The code transferes rows from staging to transaction. But each session is for a 
 ```
 
 ## Change ideas
-asdf asdf
+To improve performance, you might try some of the following.
+- Process fewer rows per loop.
+- Move the select statement out of the transaction.
+- Use a READ COMMITTED SNAPSHOT transation isolation level.
+- Use a table partition on all the tables with a UserID.
+- 
