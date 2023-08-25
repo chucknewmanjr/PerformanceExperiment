@@ -30,6 +30,8 @@ The code transferes rows from staging to transaction. But each session is for a 
 To improve performance, you might try some of the following.
 - Process fewer rows per loop.
 - Move the select statement out of the transaction.
-- Use a READ COMMITTED SNAPSHOT transation isolation level.
+- Use table hints to change the locking.
+- Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
 - Use a table partition on all the tables with a UserID.
-- 
+
+
