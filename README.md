@@ -34,20 +34,23 @@ To improve performance, you might try some of the following.
 - Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
 - Use a table partition on all the tables with a UserID.
 
-# Tables
-### Setting
+# Objects
+### Setting Table
 This table gives you control over arbitrary values used in the code. 
 - NUMBER OF USERS - Typically 5. This is the number of users created. The fake staging data is distributed amung this number of users.
 - RUN SECONDS LIMIT - Typically, 60 seconds. The p_RunProcessTransactions proc stops processing 
 
-### User
+### User Table
 This table is primarrilly for reserving a user for a session. The p_RunProcessTransactions proc sets the IsProcessing value for a user. UserID is a foreign key in 3 other tables:
 - Staging
 - Transaction
 - ExecutionLog
 
-### Staging
-This table gets loaded with fake data just so that there's something to transfer. 
+### Staging Table
+This table gets loaded with fake data just so that there's something to transfer. In the p_RunProcessTransactions proc, it gets selected and updated. The update sets the ProcessedDate for the rows that have been transfered.
+
+### Transaction Table
+This table on
 
 
 
