@@ -33,12 +33,15 @@ To improve performance, you might try some of the following.
 - Use table hints to change the locking.
 - Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
 - Use a table partition on all the tables with a UserID.
+- Use OPTIMIZE_FOR_SEQUENTIAL_KEY.
 
 # Objects
 ### Setting Table
 This table gives you control over arbitrary values used in the code. 
 - NUMBER OF USERS - Typically 5. This is the number of users created. The fake staging data is distributed amung this number of users.
-- RUN SECONDS LIMIT - Typically, 60 seconds. The p_RunProcessTransactions proc stops processing 
+- RUN SECONDS LIMIT - Typically, 60. The p_RunProcessTransactions proc stops processing at that time limit.
+- SECONDS BETWEEN RUNS - Typically, 100. It's how p_PerformanceReport distinguishes one run from another. It's the time between the start of 2 runs. So it should be greater than RUN SECONDS LIMIT.
+- PROCESS TRANSACTIONS ROW COUNT - Typically, 1000 to 10,000. It's the number of rows processed each time p_ProcessTransactions is called. If SQL Server is managing 5000 locks on a table or partition, 
 
 ### User Table
 This table is primarrilly for reserving a user for a session. The p_RunProcessTransactions proc sets the IsProcessing value for a user. UserID is a foreign key in 3 other tables:
