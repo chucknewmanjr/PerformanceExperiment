@@ -16,7 +16,7 @@ After that, make improvements and repeat the process. You can change procs, inde
 * The insert and update must remain in a transaction together.
 
 # What the code does
-The code transfers rows from staging to transaction. But each session is for a different user. So one session does not touch the rows that are for another session. The purpose of this is entirely fictional. It's intended to imitate a common concurrent execution situation. After it transfers some rows, it updates those rows in staging so that they don't get transferred again. That insert and update are together in a transaction.
+The code transfers rows from staging to transaction. The transfered rows get timestamped in staging to mark them as complete. It's intended to imitate a common concurrent execution situation. The insert and update are in a transaction together so that they either both succeed or both roll back. Each session claims a user and only works on that user. So one session does not touch the rows that are for another user.
 
 ```mermaid
 	graph BT;
@@ -27,10 +27,13 @@ The code transfers rows from staging to transaction. But each session is for a d
 ```
 
 # Change ideas
-To improve performance, you might try some of the following.
-- Process fewer rows per loop.
-- Move the select statement out of the transaction.
-- Use table hints to change the locking.
+The performance of this scenario is typically improved by partitioning tables by user. That's because such partitioning prevents locks for one user from blocking any other users. But there are many other factors that affect performance with or without partitioning. You might try some of the following.
+- Partition staging and transaction tables on user.
+- Process more or fewer rows per loop.
+- Select the rows to move into a temp table.
+- Put thast select inside or outside of the transaction.
+- Use user as the first column in the clustered index.
+- Force table or row level locking with table hints.
 - Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
 - Use a table partition on all the tables with a UserID.
 - Use OPTIMIZE_FOR_SEQUENTIAL_KEY.
