@@ -31,7 +31,7 @@ The performance of this scenario is typically improved by partitioning tables by
 - Partition staging and transaction tables on user.
 - Process more or fewer rows per loop.
 - Select the rows to move into a temp table.
-- Put thast select inside or outside of the transaction.
+- Put that select inside or outside of the transaction.
 - Use user as the first column in the clustered index.
 - Force table or row level locking with table hints.
 - Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
