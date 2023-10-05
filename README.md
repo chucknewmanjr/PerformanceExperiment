@@ -18,7 +18,7 @@ After that, make improvements and repeat the process. You can change procs, inde
 * The insert and update must remain in a transaction together.
 
 # What the code does
-The code transfers rows from staging to transaction. The transfered rows get timestamped in staging to mark them as complete. It's intended to imitate a common concurrent execution situation. The insert and update are in a transaction together so that they either both succeed or both roll back. Each session claims a user and only works on that user. So one session does not touch the rows that are for another user.
+The code transfers rows from staging to transaction. The transfered rows get timestamped in staging to mark them as complete. It's intended to imitate a common concurrent execution situation. Actually, it's intended to typical situation that works better when the tables are partitioned. The insert and update are in a transaction together so that they either both succeed or both roll back. Each session claims a user and only works on that user. So one session does not touch the rows that are for another user.
 
 ```mermaid
 	graph BT;
