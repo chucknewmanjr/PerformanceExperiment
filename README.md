@@ -35,7 +35,6 @@ The performance of this scenario is typically improved by partitioning tables by
 - Use user as the first column in the clustered index.
 - Force table or row level locking with table hints.
 - Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
-- Use a table partition on all the tables with a UserID.
 - Use OPTIMIZE_FOR_SEQUENTIAL_KEY.
 
 # Objects
