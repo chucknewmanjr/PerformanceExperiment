@@ -15,6 +15,7 @@ Once they're all done, run the following to check the results.
 # The Challenge
 After that, make improvements and repeat the process. You can change procs, indexing, isolation levels, and such. But there are limits:
 * Don't change the columns.
+* Don't remove any constraints like foreign keys.
 * The insert and update must remain in a transaction together.
 
 # What the code does
