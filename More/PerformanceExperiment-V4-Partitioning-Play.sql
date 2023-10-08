@@ -232,7 +232,7 @@ create or alter proc [dbo].[p_PerformanceReport] as;
 		group by RunID
 	)
 	select 
-		identity(int) as Run,
+		identity(int) as Experiment,
 		StartTime,
 		isnull(lead(PrevEndTime) over (order by StartTime), '9999-01-01') as EndTime
 	into #RunGroup
@@ -242,19 +242,19 @@ create or alter proc [dbo].[p_PerformanceReport] as;
 
 	-- performance report
 	select
-		r.Run, 
+		r.Experiment, 
 		AVG(l.[Version]) as [Version],
-		AVG(l.[RowCount]) as [RowCount],
+		AVG(l.[RowCount]) as Row_Count,
 		COUNT(distinct l.SPID) as [Users],
-		SUM(l.[RowCount]) / 1000 as K_Rows,
 		FORMAT(MIN(r.StartTime), 'yyyy-MM-dd HH:mm:ss') as From_Time,
 		CAST(ROUND(DATEDIFF(MILLISECOND, MIN(l.StartTime), MAX(l.EndTime)) / 1000.0, 0) as real) as Secs,
+		SUM(l.[RowCount]) / 1000 as K_Rows,
 		CAST(ROUND(SUM(l.[RowCount]) * 1.0 / DATEDIFF(MILLISECOND, MIN(l.StartTime), MAX(l.EndTime)), 1) as real) as K_Rows_Per_Sec,
 		SUM(IIF(l.ErrorMessage is null, 0, 1)) as Errors
 	from #RunGroup r
 	join [dbo].[ExecutionLog] l on l.StartTime between r.StartTime and r.EndTime
-	group by r.Run
-	order by r.Run;
+	group by r.Experiment
+	order by r.Experiment;
 go
 
 -- ============================================================================
