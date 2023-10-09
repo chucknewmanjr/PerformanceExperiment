@@ -19,7 +19,7 @@ After that, make improvements and repeat the process. You can change procs, inde
 * The insert and update must remain in a transaction together.
 
 # What the code does
-The code transfers rows from [Staging] to [Transaction]. The transfered rows get timestamped in [Staging] to mark them as complete. It's intended to imitate a common concurrent execution situation. Actually, it's intended to be typical situation that works better when the tables are partitioned. The insert and update are in a transaction together so that they either both succeed or both roll back. Each session claims a user and only works on that user. So one session does not touch the rows that are for another user.
+The code transfers rows from [Staging] to [Transaction]. The transferred rows get timestamped in [Staging] to mark them as complete. It's intended to imitate a common concurrent execution situation. Actually, it's intended to be typical situation that works better when the tables are partitioned. The insert and update are in a transaction together so that they either both succeed or both roll back. Each session claims a user and only works on that user. So one session does not touch the rows that are for another user.
 
 ```mermaid
 	graph BT;
@@ -44,7 +44,7 @@ The performance of this scenario is typically improved by partitioning tables by
 # [Setting] table
 This table gives you control over arbitrary values used in the code. 
 - EXPERIMENT VERSION - Recorded in [ExecutionLog] so you can tell which type experiment you were running.
-- NUMBER OF USERS - Typically, 5. This is the number of users created. The fake staging data is distributed amung this number of users.
+- NUMBER OF USERS - Typically, 5. This is the number of users created. The fake staging data is distributed among this number of users.
 - RUN SECONDS LIMIT - Typically, 60. The [p_RunProcessTransactions] proc stops processing at that time limit.
 - PROCESS TRANSACTIONS ROW COUNT - Typically, 1000 to 100,000. It's the number of rows processed each time [p_ProcessTransactions] is called.
 
@@ -57,9 +57,9 @@ The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking fo
 - **Users** - Number of users or sessions participating in the experiment.
 - **From_Time** - The start of the first session running.
 - **Secs** - The total number of seconds the experiment ran for.
-- **K_Rows** - The number of rows transfered from [Staging] to [Transaction].
+- **K_Rows** - The number of rows transferred from [Staging] to [Transaction].
 - **K_Rows_Per_Sec** - K_Rows / Secs. Higher the better.
-- **Errors** - Number of errors that occured during the run. Typically deadlocks. Query [ExecutionLog] for more info.
+- **Errors** - Number of errors that occurred during the run. Typically deadlocks. Query [ExecutionLog] for more info.
 
 # Go read /More
 The [More](https://github.com/chucknewmanjr/PerformanceExperiment/tree/main/More) subfolder contains some additional useful scripts.
