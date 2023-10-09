@@ -65,6 +65,7 @@ The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking fo
 The [More](https://github.com/chucknewmanjr/PerformanceExperiment/tree/main/More) subfolder contains some additional useful scripts.
 
 - p_LocksAndBlocks.sql - Run this while an experiment is running to see all the locks and any blocked and blocking sessions.
+- PerformanceExperiment-V2-Partitioning.sql -
 - 
 
 
