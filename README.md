@@ -43,10 +43,10 @@ The performance of this scenario is typically improved by partitioning tables by
 
 # [Setting] table
 This table gives you control over arbitrary values used in the code. 
-- EXPERIMENT VERSION - Recorded in [ExecutionLog] so you can tell which type experiment you were running.
-- NUMBER OF USERS - Typically, 5. This is the number of users created. The fake staging data is distributed among this number of users.
-- RUN SECONDS LIMIT - Typically, 60. The [p_RunProcessTransactions] proc stops processing at that time limit.
-- PROCESS TRANSACTIONS ROW COUNT - Typically, 1000 to 100,000. It's the number of rows processed each time [p_ProcessTransactions] is called.
+- **EXPERIMENT VERSION** - Recorded in [ExecutionLog] so you can tell which type experiment you were running.
+- **NUMBER OF USERS** - Typically, 5. This is the number of users created. The fake staging data is distributed among this number of users.
+- **RUN SECONDS LIMIT** - Typically, 60. The [p_RunProcessTransactions] proc stops processing at that time limit.
+- **PROCESS TRANSACTIONS ROW COUNT** - Typically, 1000 to 100,000. It's the number of rows processed each time [p_ProcessTransactions] is called.
 
 # [p_PerformanceReport]
 The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking for gaps when no script was running. The K_Rows_Per_Sec column is the number of 1000 rows per second. Higher the better. The seconds are from the start of the first execution of the [p_ProcessTransactions] proc to the end of the last. That means it includes logging executions, inserting more rows into the Staging table and more.
