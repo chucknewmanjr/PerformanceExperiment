@@ -20,12 +20,11 @@ The trick to understanding lock modes is the lock compatability matrix. For exam
 <img width="357" alt="lock-compatibility-matrix" src="https://github.com/chucknewmanjr/PerformanceExperiment/assets/33396894/cf5d2ca9-330d-494a-bc89-0bc214cacfdd">
 
 # PerformanceExperiment-V2-Partitioning.sql
-
+In this version, the [Staging] and [Transaction] tables are partitioned so that each user is in its own partition.
 
 # PerformanceExperiment-V3-Play.sql
-
+This version doesn't have partitioning. But it does have some of the other changes listed above.
 
 # PerformanceExperiment-V4-Partitioning-Play.sql
-
-
+This version has partitioning plus some of the other changes listed above.
 
