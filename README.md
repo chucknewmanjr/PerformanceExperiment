@@ -64,9 +64,9 @@ The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking fo
 # Go read /More
 The [More](https://github.com/chucknewmanjr/PerformanceExperiment/tree/main/More) subfolder contains some additional useful scripts.
 
-- p_LocksAndBlocks.sql - Run this while an experiment is running to see all the locks and any blocked and blocking sessions.
-- PerformanceExperiment-V2-Partitioning.sql -
-- PerformanceExperiment-V3-Play.sql -
-- PerformanceExperiment-V4-Partitioning-Play.sql - 
+- **p_LocksAndBlocks.sql** - Run this while an experiment is running to see all the locks and any blocked and blocking sessions.
+- **PerformanceExperiment-V2-Partitioning.sql** - In this version, the [Stagin] and [Transaction] tables are partitioned so that each user is in its own partition.
+- **PerformanceExperiment-V3-Play.sql** - This version doesn't have partitioning. But it does have some of the other changes listed above.
+- **PerformanceExperiment-V4-Partitioning-Play.sql** - This version has partitioning plus some of the other changes listed above.
 
 
