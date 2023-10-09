@@ -86,7 +86,7 @@ if exists (select * from sys.partition_functions where name = 'UserPartitionFunc
 go
 
 -- 9 boundry values means 10 partitions. Right means the value is the highest in its partition.
-create partition function UserPartitionFunction (tinyint) as range right for values (1, 2, 3, 4, 5, 6, 7, 8, 9); 
+create partition function UserPartitionFunction (tinyint) as range left for values (1, 2, 3, 4, 5, 6, 7, 8, 9); 
 go
 
 create partition scheme UserPartitionScheme as partition UserPartitionFunction all to ([PRIMARY]);
