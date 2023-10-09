@@ -66,6 +66,6 @@ The [More](https://github.com/chucknewmanjr/PerformanceExperiment/tree/main/More
 
 - p_LocksAndBlocks.sql - Run this while an experiment is running to see all the locks and any blocked and blocking sessions.
 - PerformanceExperiment-V2-Partitioning.sql -
-- 
+- PerformanceExperiment-V3-Play.sql - 
 
 
