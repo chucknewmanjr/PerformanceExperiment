@@ -19,6 +19,13 @@ The to understanding lock modes is the lock compatability matrix. For example, o
 
 <img width="357" alt="lock-compatibility-matrix" src="https://github.com/chucknewmanjr/PerformanceExperiment/assets/33396894/cf5d2ca9-330d-494a-bc89-0bc214cacfdd">
 
+# PerformanceExperiment-V2-Partitioning.sql
+
+
+# PerformanceExperiment-V3-Play.sql
+
+
+# PerformanceExperiment-V4-Partitioning-Play.sql
 
 
 
