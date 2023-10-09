@@ -7,12 +7,12 @@ Run this while an experiment is running to see which locks are held and which se
 - index_id - 1 means it's the clustered index. NULL means the lock is on the whole table.
 - partition_number - Only for partitioned tables.
 - type - resource_type. Get enough PAGE and KEY locks and locking will escelate to OBJECT or HOBT. HOBT is a partition level lock.
-- mode 
-- status
-- occurs
-- blocking_spid
-- secs
-- wait_time
+- mode - See below.
+- status - Anything other than GRANT means the lock request is blocked by a lock in another session.
+- occurs - The number of locks that match. KEY and PAGE type locks often have several.
+- blocking_spid - The spid of the other session that's blocking the requested lock from being granted.
+- secs - How long the lock request has been waiting.
+- wait_type - What the other session is doing while this session is waiting.
 
 
 
