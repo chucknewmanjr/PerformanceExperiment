@@ -62,13 +62,9 @@ The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking fo
 - Errors - Number of errors that occured during the run. Typically deadlocks. Query [ExecutionLog] for more info.
 
 # Go read /More
-The [More](https://github.com/chucknewmanjr/PerformanceExperiment/tree/main/More) subfolder
+The [More](https://github.com/chucknewmanjr/PerformanceExperiment/tree/main/More) subfolder contains some additional useful scripts.
 
-# More/p_LocksAndBlocks.sql
-This script is in the "More" subfolder. Run it while an experiment is running to see which locks are held and which sessions are blocked by other sessions. It might help you figure out how to make your code faster.
-
-
-
-
+- p_LocksAndBlocks.sql - Run this while an experiment is running to see all the locks and any blocked and blocking sessions.
+- 
 
 
