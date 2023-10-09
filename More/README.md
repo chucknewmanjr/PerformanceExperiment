@@ -1,18 +1,18 @@
 # p_LocksAndBlocks.sql
 Run this while an experiment is running to see which locks are held and which sessions are blocked by other sessions. It might help you figure out how to make your code faster.
 
-- spid - session ID or process ID. See [sys.dm_tran_locks](https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-tran-locks-transact-sql?view=sql-server-ver16) request_session_id for more info.
-- block - "blocked", "blocking" or both means it's blocked by or blocking another session.
-- table_name
-- index_id - 1 means it's the clustered index. NULL means the lock is on the whole table.
-- partition_number - Only for partitioned tables.
-- type - resource_type. Get enough PAGE and KEY locks and locking will escelate to OBJECT or HOBT. HOBT is a partition level lock.
-- mode - See below.
-- status - Anything other than GRANT means the lock request is blocked by a lock in another session.
-- occurs - The number of locks that match. KEY and PAGE type locks often have several.
-- blocking_spid - The spid of the other session that's blocking the requested lock from being granted.
-- secs - How long the lock request has been waiting.
-- wait_type - What the other session is doing while this session is waiting.
+- **spid** - session ID or process ID. See [sys.dm_tran_locks](https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-tran-locks-transact-sql?view=sql-server-ver16) request_session_id for more info.
+- **block** - "blocked", "blocking" or both means it's blocked by or blocking another session.
+- **table_name**
+- **index_id** - 1 means it's the clustered index. NULL means the lock is on the whole table.
+- **partition_number** - Only for partitioned tables.
+- **type** - resource_type. Get enough PAGE and KEY locks and locking will escelate to OBJECT or HOBT. HOBT is a partition level lock.
+- **mode** - See below.
+- **status** - Anything other than GRANT means the lock request is blocked by a lock in another session.
+- **occurs** - The number of locks that match. KEY and PAGE type locks often have several.
+- **blocking_spid** - The spid of the other session that's blocking the requested lock from being granted.
+- **secs** - How long the lock request has been waiting.
+- **wait_type** - What the other session is doing while this session is waiting.
 
 ## p_LocksAndBlocks - mode column
 The to understanding lock modes is the lock compatability matrix. For example, one session can hold a shared lock on a page while another session is granted an update and vice versa. If a lock request is blocked, compare the lock modes of the blocked lock and the blocking lock.
