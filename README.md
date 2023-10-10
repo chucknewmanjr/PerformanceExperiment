@@ -40,6 +40,7 @@ The performance of this scenario is typically improved by partitioning tables by
 - Force table or row level locking with table hints.
 - Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
 - Use OPTIMIZE_FOR_SEQUENTIAL_KEY.
+- Lower the fill factor of a table to reduce page splits.
 
 Once you've found an experiment you like, try increasing the NUMBER OF USERS and RUN SECONDS LIMIT settings for a better comparison.
 
