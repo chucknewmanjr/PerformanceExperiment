@@ -25,7 +25,7 @@ In this version, the [Staging] and [Transaction] tables are partitioned so that 
 
 # PerformanceExperiment-V3-Play.sql
 This version doesn't have partitioning. But it does have some of the other changes listed above. Currently, it has the following:
-- READ_COMMITTED_SNAPSHOT
+- READ_COMMITTED_SNAPSHOT - Better thanplain old read committed. It prevents blocking. But it comes with its own issues. [(Read more)](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql/snapshot-isolation-in-sql-server)
 
 # PerformanceExperiment-V4-Partitioning-Play.sql
 This version has partitioning plus some of the other changes listed above. Currently, it has the following:
