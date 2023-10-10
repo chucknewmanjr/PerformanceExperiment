@@ -15,7 +15,7 @@ Run this script while an experiment is running to see which locks are held and w
 - **secs** - How long the lock request has been waiting.
 - **wait_type** - What's causing the block.
 
-## mode column
+### mode column
 The key to understanding lock modes is the lock compatability matrix. For example, one session can hold a shared lock on a page while another session is granted an update and vice versa. That's not the case for 2 sessions requesting update locks. One of those sessions has to wait until the other one completes its transaction. If you see that a lock request is blocked, compare the lock modes of the blocked and blocking locks.
 
 <img width="357" alt="lock-compatibility-matrix" src="https://github.com/chucknewmanjr/PerformanceExperiment/assets/33396894/cf5d2ca9-330d-494a-bc89-0bc214cacfdd">
