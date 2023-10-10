@@ -52,7 +52,7 @@ This table gives you control over arbitrary values used in the code.
 - **PROCESS TRANSACTIONS ROW COUNT** - Typically, 1000 to 100,000. It's the number of rows processed each time [p_ProcessTransactions] is called.
 
 # [p_PerformanceReport]
-The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking for gaps when no script was running. The K_Rows_Per_Sec column is the number of 1000 rows per second. Higher the better. The seconds are from the start of the first execution of the [p_ProcessTransactions] proc to the end of the last. That means it includes logging executions, inserting more rows into the Staging table and more.
+This proc gets its data from [ExecutionLog]. It finds "Experiments" by looking for gaps when no script was running. The K_Rows_Per_Sec column is the number of 1000 rows per second. Higher the better. The seconds are from the start of the first execution of [p_ProcessTransactions] to the end of the last. That means it includes logging executions, inserting more rows into the Staging and more. In other words, it does not add up the time for each run. That's because other sessions might cause the gap between runs to lengthen. We want to include those gaps.
 
 ### Output Columns
 - **Experiment** - See above.
@@ -63,7 +63,7 @@ The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking fo
 - **Secs** - The total number of seconds the experiment ran for.
 - **K_Rows** - The number of rows transferred from [Staging] to [Transaction].
 - **K_Rows_Per_Sec** - K_Rows / Secs. Higher the better.
-- **Errors** - Number of errors that occurred during the run. Typically deadlocks. Query [ExecutionLog] for more info.
+- **Errors** - Number of errors that occurred during the run. Query [ExecutionLog] for more info.
 
 # Go read /More
 The [More](https://github.com/chucknewmanjr/PerformanceExperiment/tree/main/More) subfolder contains some additional useful scripts.
