@@ -51,6 +51,7 @@ This table gives you control over arbitrary values used in the code.
 # [p_PerformanceReport]
 The proc gets its data from [ExecutionLog]. It finds "Experiments" by looking for gaps when no script was running. The K_Rows_Per_Sec column is the number of 1000 rows per second. Higher the better. The seconds are from the start of the first execution of the [p_ProcessTransactions] proc to the end of the last. That means it includes logging executions, inserting more rows into the Staging table and more.
 
+### Output Columns
 - **Experiment** - See above.
 - **Version** - The "EXPERIMENT VERSION" setting at the time of the experiment.
 - **Row_Count** - The "PROCESS TRANSACTIONS ROW COUNT" setting at the time of the experiment.
