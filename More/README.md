@@ -23,8 +23,11 @@ The key to understanding lock modes is the lock compatability matrix. For exampl
 In this version, the [Staging] and [Transaction] tables are partitioned so that each user is in its own partition. There are only 10 partitions. So the number of users is limited to 10. 
 
 # PerformanceExperiment-V3-Play.sql
-This version doesn't have partitioning. But it does have some of the other changes listed above. 
+This version doesn't have partitioning. But it does have some of the other changes listed above. Currently, it has the following:
+- READ_COMMITTED_SNAPSHOT
 
 # PerformanceExperiment-V4-Partitioning-Play.sql
-This version has partitioning plus some of the other changes listed above.
+This version has partitioning plus some of the other changes listed above. Currently, it has the following:
+- READ_COMMITTED_SNAPSHOT
+- OPTIMIZE_FOR_SEQUENTIAL_KEY on the ExecutionLog table.
 
