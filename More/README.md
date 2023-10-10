@@ -30,5 +30,5 @@ This version doesn't have partitioning. But it does have some of the other chang
 # PerformanceExperiment-V4-Partitioning-Play.sql
 This version has partitioning plus some of the other changes listed above. Currently, it has the following:
 - READ_COMMITTED_SNAPSHOT
-- OPTIMIZE_FOR_SEQUENTIAL_KEY on the ExecutionLog table.
+- OPTIMIZE_FOR_SEQUENTIAL_KEY on the ExecutionLog table. [(Read more)](https://blog.sqlauthority.com/2020/05/06/sql-server-resolving-last-page-insert-pagelatch_ex-contention-with-optimize_for_sequential_key/)
 
