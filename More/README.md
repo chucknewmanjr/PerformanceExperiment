@@ -12,7 +12,7 @@ Run this script while an experiment is running to see which locks are held and w
 - **occurs** - The number of locks that match. KEY and PAGE type locks often have several.
 - **blocking_spid** - The spid of the other session that's blocking the requested lock from being granted.
 - **secs** - How long the lock request has been waiting.
-- **wait_type** - What the other session is doing while this session is waiting.
+- **wait_type** - What's causing the block.
 
 ## mode column
 The key to understanding lock modes is the lock compatability matrix. For example, one session can hold a shared lock on a page while another session is granted an update and vice versa. That's not the case for 2 sessions requesting update locks. One of those sessions will have to wait until the other one completes its transaction. If you see that a lock request is blocked, compare the lock modes of the blocked and blocking locks.
