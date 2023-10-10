@@ -41,6 +41,8 @@ The performance of this scenario is typically improved by partitioning tables by
 - Use a different transaction isolation level. (Try READ COMMITTED SNAPSHOT).
 - Use OPTIMIZE_FOR_SEQUENTIAL_KEY.
 
+Once you've found an experiment you like, try increasing the NUMBER OF USERS and RUN SECONDS LIMIT settings for a better comparison.
+
 # [Setting] table
 This table gives you control over arbitrary values used in the code. 
 - **EXPERIMENT VERSION** - Recorded in [ExecutionLog] so you can tell which type experiment you were running.
