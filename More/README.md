@@ -15,15 +15,15 @@ Run this script while an experiment is running to see which locks are held and w
 - **wait_type** - What the other session is doing while this session is waiting.
 
 ## mode column
-The trick to understanding lock modes is the lock compatability matrix. For example, one session can hold a shared lock on a page while another session is granted an update and vice versa. That's not the case for 2 sessions requesting update locks. One of those sessions will have to wait until the other one completes its transaction. If you see that a lock request is blocked, compare the lock modes of the blocked and blocking locks.
+The key to understanding lock modes is the lock compatability matrix. For example, one session can hold a shared lock on a page while another session is granted an update and vice versa. That's not the case for 2 sessions requesting update locks. One of those sessions will have to wait until the other one completes its transaction. If you see that a lock request is blocked, compare the lock modes of the blocked and blocking locks.
 
 <img width="357" alt="lock-compatibility-matrix" src="https://github.com/chucknewmanjr/PerformanceExperiment/assets/33396894/cf5d2ca9-330d-494a-bc89-0bc214cacfdd">
 
 # PerformanceExperiment-V2-Partitioning.sql
-In this version, the [Staging] and [Transaction] tables are partitioned so that each user is in its own partition.
+In this version, the [Staging] and [Transaction] tables are partitioned so that each user is in its own partition. There are only 10 partitions. So the number of users is limited to 10. 
 
 # PerformanceExperiment-V3-Play.sql
-This version doesn't have partitioning. But it does have some of the other changes listed above.
+This version doesn't have partitioning. But it does have some of the other changes listed above. 
 
 # PerformanceExperiment-V4-Partitioning-Play.sql
 This version has partitioning plus some of the other changes listed above.
