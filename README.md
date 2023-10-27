@@ -46,7 +46,7 @@ Once you've found an experiment you like, try increasing the NUMBER OF USERS and
 
 # [Setting] table
 This table gives you control over arbitrary values used in the code. 
-- **EXPERIMENT VERSION** - Recorded in [ExecutionLog] so you can tell which type experiment you were running.
+- **EXPERIMENT VERSION** - Recorded in [ExecutionLog] so you can tell which type of experiment you were running.
 - **NUMBER OF USERS** - Typically, 5. This is the number of users created. The fake staging data is distributed among this number of users.
 - **RUN SECONDS LIMIT** - Typically, 60. The [p_RunProcessTransactions] proc stops processing at that time limit.
 - **PROCESS TRANSACTIONS ROW COUNT** - Typically, 1000 to 100,000. It's the number of rows processed each time [p_ProcessTransactions] is called.
