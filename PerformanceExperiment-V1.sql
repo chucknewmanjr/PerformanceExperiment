@@ -339,3 +339,16 @@ create or alter proc [dbo].[p_RunProcessTransactions] as;
 	update [dbo].[User] set SessionID = null where UserID = @UserID;
 go
 
+DECLARE @is_read_committed_snapshot_on BIT = (
+	SELECT is_read_committed_snapshot_on
+	FROM sys.databases
+	WHERE database_id = DB_ID()
+);
+
+SELECT
+	IIF(MAX(partition_number) > 1, 1, 0) AS Partitioned,
+	@is_read_committed_snapshot_on AS [Read_Committed_Snapshot]
+FROM sys.partitions
+WHERE object_id = OBJECT_ID('[dbo].[Transaction]');
+GO
+
