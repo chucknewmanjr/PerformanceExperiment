@@ -31,22 +31,21 @@ USE [PerformanceExperiment];
 GO
 
 -- ============================================================================
--- DROP TABLES
+-- CLEAN UP BEFORE SETTING READ COMMITTED SNAPSHOT
 -- ============================================================================
 
-drop table if exists [dbo].[Staging];
-drop table if exists [dbo].[Transaction];
-drop table if exists [dbo].[User];
-drop table if exists [dbo].[AppSetting];
-go
+DROP TABLE IF EXISTS [dbo].[Staging];
+DROP TABLE IF EXISTS [dbo].[Transaction];
+DROP TABLE IF EXISTS [dbo].[User];
+DROP TABLE IF EXISTS [dbo].[AppSetting];
 
--- ============================================================================
--- READ COMMITTED SNAPSHOT
--- ============================================================================
+ALTER INDEX ALL ON [dbo].[ExecutionLog] REBUILD; -- free up pages
+
+DBCC SHRINKDATABASE (0, 0) WITH NO_INFOMSGS; -- remove unused pages
 
 -- Changing this can take a while. Dropping tables helps.
 ALTER DATABASE [PerformanceExperiment] SET READ_COMMITTED_SNAPSHOT ON;
-go
+GO
 
 -- ============================================================================
 -- APP SETTINGS
@@ -339,4 +338,3 @@ create or alter proc [dbo].[p_RunProcessTransactions] as;
 
 	update [dbo].[User] set SessionID = null where UserID = @UserID;
 go
-
