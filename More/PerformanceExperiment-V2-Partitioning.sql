@@ -39,7 +39,8 @@ DROP TABLE IF EXISTS [dbo].[Transaction];
 DROP TABLE IF EXISTS [dbo].[User];
 DROP TABLE IF EXISTS [dbo].[AppSetting];
 
-ALTER INDEX ALL ON [dbo].[ExecutionLog] REBUILD; -- free up pages
+IF OBJECT_ID('[dbo].[ExecutionLog]') IS NOT NULL
+	ALTER INDEX ALL ON [dbo].[ExecutionLog] REBUILD; -- free up pages
 
 DBCC SHRINKDATABASE (0, 0) WITH NO_INFOMSGS; -- remove unallocated pages
 
@@ -122,17 +123,17 @@ create table [dbo].[Staging] (
 		references [dbo].[User] (UserID),
 	StagingValue varchar(200) not null,
 	ProcessDate datetime null,
-	primary key clustered (StagingID, UserID)
+	primary key (StagingID, UserID)
 ) on UserPartitionScheme(UserID);
 go
 
 alter table [dbo].[Staging] set (lock_escalation = auto);
 go
 
-create or alter proc [dbo].[p_StageFakeTransactions] (
+create or alter proc [dbo].[p_StageFakeTransactions]
 	@RowCount int = 10e3,
 	@UserID tinyint = null
-) as;
+as;
 	/*
 		How can we fake staging transactions?
 		There are a lot of rows in sys.all_columns. Let's use that.
@@ -171,47 +172,51 @@ if OBJECT_ID('[dbo].[RunID]') is null
 go
 
 -- drop table [dbo].[ExecutionLog];
-if OBJECT_ID('[dbo].[ExecutionLog]') is null begin;
+if OBJECT_ID('[dbo].[ExecutionLog]') is null
 	create table [dbo].[ExecutionLog] (
 		ExecutionLogID int identity primary key,
 		RunID smallint not null,
 		UserID tinyint not null,
 		SPID smallint not null default @@SPID,
 		[Version] tinyint not null,
+		IsPartitioned BIT NOT NULL,
+		IsSnapshot BIT NOT NULL,
 		[RowCount] int not null,
 		StartTime datetime2(7) not null,
 		EndTime datetime2(7) not null default sysdatetime(),
 		ErrorMessage varchar(500) null
 	);
-end;
-else begin;
-	UPDATE STATISTICS [dbo].[ExecutionLog];
-
-	alter index all on [dbo].[ExecutionLog] rebuild;
-end;
 go
 
-if INDEXPROPERTY(object_id('[dbo].[ExecutionLog]'), 'IX1', 'IndexID') is null
-	create index IX1 on [dbo].[ExecutionLog] (RunID) include (StartTime, EndTime);
-go
-
-create or alter proc [dbo].[p_LogExecution] (
+create or alter proc [dbo].[p_LogExecution]
 	@RunID smallint, 
 	@UserID tinyint, 
 	@RowCount int, 
 	@Start datetime2(7), 
 	@ErrorMessage varchar(500) = null
-) as
+as
 	/*
 		exec [dbo].[p_LogExecution] @RunID, @UserID, @RowCount, @Start, @ErrorMessage;
 	*/
 	declare @Version tinyint = 	[dbo].[p_GetAppSetting]('EXPERIMENT VERSION');
 
+	DECLARE @IsPartitioned BIT = (
+		SELECT IIF(MAX(partition_number) > 1, 1, 0)
+		FROM sys.partitions
+		WHERE object_id = OBJECT_ID('[dbo].[Transaction]')
+	);
+
+	DECLARE @IsSnapshot BIT = (
+		SELECT is_read_committed_snapshot_on
+		FROM sys.databases
+		WHERE database_id = DB_ID()
+	);
+
 	insert [dbo].[ExecutionLog] (
-		RunID, UserID, [Version], [RowCount], StartTime, ErrorMessage
+		RunID, UserID, [Version], IsPartitioned, IsSnapshot, [RowCount], StartTime, ErrorMessage
 	)
 	values (
-		@RunID, @UserID, @Version, @RowCount, @Start, @ErrorMessage
+		@RunID, @UserID, @Version, @IsPartitioned, @IsSnapshot, @RowCount, @Start, @ErrorMessage
 	);
 go
 
@@ -245,6 +250,8 @@ create or alter proc [dbo].[p_PerformanceReport] as;
 	select
 		r.Experiment, 
 		AVG(l.[Version]) as [Version],
+		AVG(l.IsPartitioned * 1) AS Is_Partitioned,
+		AVG(l.IsSnapshot * 1) AS Is_Snapshot,
 		AVG(l.[RowCount]) as Row_Count,
 		COUNT(distinct l.SPID) as [Users],
 		FORMAT(MIN(r.StartTime), 'yyyy-MM-dd HH:mm:ss') as From_Time,
@@ -268,7 +275,7 @@ create table [dbo].[Transaction] (
 	UserID tinyint not null 
 		references [dbo].[User] (UserID),
 	TransactionValue varchar(200) not null,
-	primary key clustered (TransactionID, UserID)
+	primary key (TransactionID, UserID)
 ) on UserPartitionScheme(UserID);
 go
 
@@ -279,10 +286,10 @@ go
 -- PROCESS MESSAGE PROCS
 -- ============================================================================
 
-create or alter proc [dbo].[p_ProcessTransactions] (
+create or alter proc [dbo].[p_ProcessTransactions]
 	@RunID smallint,
-	@UserID tinyint
-) as;
+	@UserID TINYINT
+AS;
 	/*
 		Copy rows from Staging to Transaction and then mark the rows as processed.
 
@@ -366,19 +373,5 @@ create or alter proc [dbo].[p_RunProcessTransactions] as;
 		exec [dbo].[p_ProcessTransactions] @RunID, @UserID;
 
 	update [dbo].[User] set SessionID = null where UserID = @UserID;
-go
-
-DECLARE @is_read_committed_snapshot_on BIT = (
-	SELECT is_read_committed_snapshot_on
-	FROM sys.databases
-	WHERE database_id = DB_ID()
-);
-
-SELECT
-	IIF(MAX(partition_number) > 1, 1, 0) AS Partitioned,
-	@is_read_committed_snapshot_on AS [Read_Committed_Snapshot]
-FROM sys.partitions
-WHERE object_id = OBJECT_ID('[dbo].[Transaction]');
 GO
-
 
