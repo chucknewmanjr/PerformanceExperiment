@@ -41,7 +41,7 @@ DROP TABLE IF EXISTS [dbo].[AppSetting];
 
 ALTER INDEX ALL ON [dbo].[ExecutionLog] REBUILD; -- free up pages
 
-DBCC SHRINKDATABASE (0, 0) WITH NO_INFOMSGS; -- remove unused pages
+DBCC SHRINKDATABASE (0, 0) WITH NO_INFOMSGS; -- remove unallocated pages
 
 -- Changing this can take a while. Dropping tables helps.
 ALTER DATABASE [PerformanceExperiment] SET READ_COMMITTED_SNAPSHOT OFF;
