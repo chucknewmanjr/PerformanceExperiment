@@ -18,8 +18,6 @@
 
 	After that, make some improvements and repeat the process.
 
-	comment from home
-
 	===========================================================================
 */
 
