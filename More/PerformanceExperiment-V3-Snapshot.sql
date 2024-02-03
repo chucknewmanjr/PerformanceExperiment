@@ -18,9 +18,10 @@
 
 	After that, make some improvements and repeat the process.
 
+		DROP DATABASE if EXISTS [PerformanceExperiment];
+
 	===========================================================================
 */
-
 USE [master]
 GO
 
@@ -31,27 +32,11 @@ USE [PerformanceExperiment];
 GO
 
 -- ============================================================================
--- CLEAN UP BEFORE SETTING READ COMMITTED SNAPSHOT
--- ============================================================================
-
-DROP TABLE IF EXISTS [dbo].[Staging];
-DROP TABLE IF EXISTS [dbo].[Transaction];
-DROP TABLE IF EXISTS [dbo].[User];
-DROP TABLE IF EXISTS [dbo].[AppSetting];
-
-IF OBJECT_ID('[dbo].[ExecutionLog]') IS NOT NULL
-	ALTER INDEX ALL ON [dbo].[ExecutionLog] REBUILD; -- free up pages
-
-DBCC SHRINKDATABASE (0, 0) WITH NO_INFOMSGS; -- remove unallocated pages
-
--- Changing this can take a while. Dropping tables helps.
--- Be sure to close all other query windows.
-ALTER DATABASE [PerformanceExperiment] SET READ_COMMITTED_SNAPSHOT ON;
-GO
-
--- ============================================================================
 -- APP SETTINGS
 -- ============================================================================
+
+DROP TABLE IF EXISTS [dbo].[AppSetting];
+GO
 
 CREATE TABLE [dbo].[AppSetting] (AppSettingName sysname PRIMARY KEY, AppSettingValue int not null);
 GO
@@ -60,8 +45,8 @@ GO
 insert [dbo].[AppSetting] values
 	('EXPERIMENT VERSION', 3), 
 	('NUMBER OF USERS', 5), -- tinyint. More users mean more sessions.
-	('RUN SECONDS LIMIT', 60), -- How long should the test run.
-	('PROCESS TRANSACTIONS ROW COUNT', 100e3) -- 10e3 is 10K. Rows processed in each loop.
+	('RUN SECONDS LIMIT', 30), -- How long should the test run.
+	('PROCESS TRANSACTIONS ROW COUNT', 100e3); -- 10e3 is 10K. Rows processed in each loop.
 go
 
 create or alter function [dbo].[p_GetAppSetting] (@AppSettingName sysname) returns int begin;
@@ -73,6 +58,18 @@ create or alter function [dbo].[p_GetAppSetting] (@AppSettingName sysname) retur
 	);
 end;
 go
+
+-- ============================================================================
+-- CLEAN UP BEFORE SETTING READ COMMITTED SNAPSHOT
+-- ============================================================================
+
+DROP TABLE IF EXISTS [dbo].[Staging];
+DROP TABLE IF EXISTS [dbo].[Transaction];
+DROP TABLE IF EXISTS [dbo].[User];
+
+if (select is_read_committed_snapshot_on from sys.databases where database_id = DB_ID()) = 1
+	ALTER DATABASE [PerformanceExperiment] SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+GO
 
 -- ============================================================================
 -- USERS
@@ -99,12 +96,12 @@ go
 
 create table [dbo].[Staging] (
 	StagingID int not null
-		identity 
-		primary key,
+		identity,
 	UserID tinyint not null 
 		references [dbo].[User] (UserID),
 	StagingValue varchar(200) not null,
-	ProcessDate datetime null
+	ProcessDate datetime null,
+	primary key (StagingID)
 );
 go
 
@@ -164,10 +161,6 @@ if OBJECT_ID('[dbo].[ExecutionLog]') is null
 		EndTime datetime2(7) not null default sysdatetime(),
 		ErrorMessage varchar(500) null
 	);
-go
-
-if INDEXPROPERTY(object_id('[dbo].[ExecutionLog]'), 'IX1', 'IndexID') is null
-	create index IX1 on [dbo].[ExecutionLog] (RunID) include (StartTime, EndTime);
 go
 
 create or alter proc [dbo].[p_LogExecution]
@@ -253,11 +246,11 @@ go
 
 create table [dbo].[Transaction] (
 	TransactionID int not null
-		identity 
-		primary key,
+		identity,
 	UserID tinyint not null 
 		references [dbo].[User] (UserID),
-	TransactionValue varchar(200) not null
+	TransactionValue varchar(200) not null,
+	primary key (TransactionID)
 );
 go
 
