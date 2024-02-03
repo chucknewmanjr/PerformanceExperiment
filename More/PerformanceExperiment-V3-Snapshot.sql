@@ -67,7 +67,7 @@ DROP TABLE IF EXISTS [dbo].[Staging];
 DROP TABLE IF EXISTS [dbo].[Transaction];
 DROP TABLE IF EXISTS [dbo].[User];
 
-if (select is_read_committed_snapshot_on from sys.databases where database_id = DB_ID()) = 1
+if (select is_read_committed_snapshot_on from sys.databases where database_id = DB_ID()) = 0
 	ALTER DATABASE [PerformanceExperiment] SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
 GO
 
