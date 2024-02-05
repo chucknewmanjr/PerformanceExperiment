@@ -43,7 +43,7 @@ GO
 
 -- The settings
 insert [dbo].[AppSetting] values
-	('EXPERIMENT VERSION', 4), 
+	('EXPERIMENT VERSION', 5), 
 	('NUMBER OF USERS', 5), -- tinyint. More users mean more sessions.
 	('RUN SECONDS LIMIT', 30), -- How long should the test run.
 	('PROCESS TRANSACTIONS ROW COUNT', 100e3); -- 10e3 is 10K. Rows processed in each loop.

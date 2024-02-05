@@ -43,7 +43,7 @@ GO
 
 -- The settings
 insert [dbo].[AppSetting] values
-	('EXPERIMENT VERSION', 2), 
+	('EXPERIMENT VERSION', 4), 
 	('NUMBER OF USERS', 5), -- tinyint. More users mean more sessions.
 	('RUN SECONDS LIMIT', 30), -- How long should the test run.
 	('PROCESS TRANSACTIONS ROW COUNT', 100e3); -- 10e3 is 10K. Rows processed in each loop.
@@ -70,25 +70,6 @@ DROP TABLE IF EXISTS [dbo].[User];
 if (select is_read_committed_snapshot_on from sys.databases where database_id = DB_ID()) = 1
 	ALTER DATABASE [PerformanceExperiment] SET READ_COMMITTED_SNAPSHOT OFF WITH ROLLBACK IMMEDIATE;
 GO
-
--- ============================================================================
--- PARTITIONING
--- ============================================================================
-
-if exists (select * from sys.partition_schemes where name = 'UserPartitionScheme')
-	drop partition scheme UserPartitionScheme;
-go
-
-if exists (select * from sys.partition_functions where name = 'UserPartitionFunction')
-	drop partition function UserPartitionFunction;
-go
-
--- 9 boundry values means 10 partitions. Right means the value is the highest in its partition.
-create partition function UserPartitionFunction (tinyint) as range left for values (1, 2, 3, 4, 5, 6, 7, 8, 9); 
-go
-
-create partition scheme UserPartitionScheme as partition UserPartitionFunction all to ([PRIMARY]);
-go
 
 -- ============================================================================
 -- USERS
@@ -121,7 +102,7 @@ create table [dbo].[Staging] (
 	StagingValue varchar(200) not null,
 	ProcessDate datetime null,
 	primary key (StagingID, UserID)
-) on UserPartitionScheme(UserID);
+);
 go
 
 alter table [dbo].[Staging] set (lock_escalation = auto);
@@ -259,7 +240,7 @@ create or alter proc [dbo].[p_PerformanceReport] as;
 	from #RunGroup r
 	join [dbo].[ExecutionLog] l on l.StartTime between r.StartTime and r.EndTime
 	group by r.Experiment
-	order by r.Experiment;
+	order by r.Experiment desc;
 go
 
 -- ============================================================================
@@ -273,7 +254,7 @@ create table [dbo].[Transaction] (
 		references [dbo].[User] (UserID),
 	TransactionValue varchar(200) not null,
 	primary key (TransactionID, UserID)
-) on UserPartitionScheme(UserID);
+);
 go
 
 alter table [dbo].[Transaction] set (lock_escalation = auto);
@@ -296,25 +277,22 @@ AS;
 	declare @ErrorMessage varchar(MAX);
 	declare @Start datetime2(7) = SYSDATETIME();
 
-	declare @Transfer table (StagingValue varchar(200) NOT NULL);
+	declare @Transfer table (StagingID int, StagingValue varchar(200) NOT NULL);
 
 	begin try;
-		begin tran;
-
-		-- This update must be in a transaction with the insert.
-		update top (@RowCount) targt
-		set ProcessDate = SYSDATETIME()
-		output inserted.StagingValue 
-		into @Transfer
-		from [dbo].[Staging] targt
+		INSERT @Transfer
+		select top (@RowCount) StagingID, StagingValue
+		from [dbo].[Staging]
 		where ProcessDate is null
 			and UserID = @UserID;
 
 		if @@ROWCOUNT <> @RowCount begin;
-			set @ErrorMessage = CONCAT(@@ROWCOUNT, ' rows updated. Expected ', @RowCount, '.');
+			set @ErrorMessage = CONCAT(@@ROWCOUNT, ' rows collected. Expected ', @RowCount, '.');
 
 			throw 50100, @ErrorMessage, 1;
 		end;
+
+		begin tran;
 
 		insert [dbo].[Transaction] (UserID, TransactionValue)
 		select @UserID, StagingValue
@@ -324,6 +302,18 @@ AS;
 			set @ErrorMessage = CONCAT(@@ROWCOUNT, ' rows inserted. Expected ', @RowCount, '.');
 
 			throw 50200, @ErrorMessage, 1;
+		end;
+
+		update targt
+		set ProcessDate = SYSDATETIME()
+		from [dbo].[Staging] targt
+		JOIN @Transfer src ON targt.StagingID = src.StagingID
+		where ProcessDate is null;
+
+		if @@ROWCOUNT <> @RowCount begin;
+			set @ErrorMessage = CONCAT(@@ROWCOUNT, ' rows updated. Expected ', @RowCount, '.');
+
+			throw 50300, @ErrorMessage, 1;
 		end;
 
 		commit;
