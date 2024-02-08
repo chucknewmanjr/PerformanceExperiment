@@ -17,8 +17,9 @@
 		exec [dbo].[p_PerformanceReport];
 
 	After that, make some improvements and repeat the process.
+	Once you're ready to delete everything including the log ...
 
-		DROP DATABASE if EXISTS [PerformanceExperiment];
+		DROP DATABASE [PerformanceExperiment];
 
 	===========================================================================
 */
@@ -101,7 +102,7 @@ create table [dbo].[Staging] (
 		references [dbo].[User] (UserID),
 	StagingValue varchar(200) not null,
 	ProcessDate datetime null,
-	primary key (StagingID, UserID)
+	primary key (StagingID)
 );
 go
 
@@ -253,7 +254,7 @@ create table [dbo].[Transaction] (
 	UserID tinyint not null 
 		references [dbo].[User] (UserID),
 	TransactionValue varchar(200) not null,
-	primary key (TransactionID, UserID)
+	primary key (TransactionID)
 );
 go
 
@@ -271,18 +272,18 @@ AS;
 	/*
 		Copy rows from Staging to Transaction and then mark the rows as processed.
 
-		exec [dbo].[p_ProcessTransactions] @UserID = 1;
+		exec [dbo].[p_ProcessTransactions] @RunID = 1, @UserID = 1;
 	*/
 	declare @RowCount int = [dbo].[p_GetAppSetting]('PROCESS TRANSACTIONS ROW COUNT');
 	declare @ErrorMessage varchar(MAX);
 	declare @Start datetime2(7) = SYSDATETIME();
 
-	declare @Transfer table (StagingID int, StagingValue varchar(200) NOT NULL);
+	declare @Transfer table (StagingID int primary key, StagingValue varchar(200) NOT NULL);
 
 	begin try;
 		INSERT @Transfer
 		select top (@RowCount) StagingID, StagingValue
-		from [dbo].[Staging]
+		from [dbo].[Staging] WITH (nolock)
 		where ProcessDate is null
 			and UserID = @UserID;
 
