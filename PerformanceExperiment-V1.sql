@@ -17,8 +17,9 @@
 		exec [dbo].[p_PerformanceReport];
 
 	After that, make some improvements and repeat the process.
+	Once you're ready to delete everything including the log ...
 
-		DROP DATABASE if EXISTS [PerformanceExperiment];
+		DROP DATABASE [PerformanceExperiment];
 
 	===========================================================================
 */
@@ -44,9 +45,9 @@ GO
 -- The settings
 insert [dbo].[AppSetting] values
 	('EXPERIMENT VERSION', 1), 
-	('NUMBER OF USERS', 5), -- tinyint. More users mean more sessions.
-	('RUN SECONDS LIMIT', 30), -- How long should the test run.
-	('PROCESS TRANSACTIONS ROW COUNT', 100e3); -- 10e3 is 10K. Rows processed in each loop.
+	('NUMBER OF USERS', 10), -- tinyint. More users mean more sessions.
+	('RUN SECONDS LIMIT', 60), -- How long should the test run.
+	('REQUEST ROW COUNT', 100e3); -- 10e3 is 10K. Rows processed in each loop.
 go
 
 create or alter function [dbo].[p_GetAppSetting] (@AppSettingName sysname) returns int begin;
@@ -81,6 +82,7 @@ CREATE TABLE [dbo].[User] (
 );
 GO
 
+-- make the right number of users
 with t(x) as (
 	select 1 
 	union all 
@@ -106,7 +108,7 @@ create table [dbo].[Staging] (
 go
 
 create or alter proc [dbo].[p_StageFakeTransactions]
-	@RowCount int = 10e3,
+	@RowsRequested int = 10e3,
 	@UserID tinyint = null
 as;
 	/*
@@ -117,24 +119,30 @@ as;
 
 	declare @NumberOfUsers int = [dbo].[p_GetAppSetting]('NUMBER OF USERS');
 
-	while @RowCount > 0 begin;
+	while @RowsRequested > 0 begin;
 		with t as (
 			select CAST(ABS(object_id) as bigint) * 136 + column_id as x
 			from sys.all_columns
 		)
 		insert [dbo].[Staging] (UserID, StagingValue)
-		select top (@RowCount)
+		select top (@RowsRequested)
 			ISNULL(@UserID, (x % @NumberOfUsers) + 1),
 			CONVERT(varchar(MAX), HASHBYTES('SHA2_512', CONCAT(x, SYSDATETIME())), 2)
 		from t;
 
-		set @RowCount -= @@ROWCOUNT;
+		set @RowsRequested -= @@ROWCOUNT;
 	end;
 go
 
--- Clean up Staging table
--- 1e6 is 1 million. Staging 1 million rows takes a minute.
-exec [dbo].[p_StageFakeTransactions] @RowCount = 1e6;
+-- Initialize Staging table
+declare @RowsRequested int = (
+	select COUNT(*) 
+		* [dbo].[p_GetAppSetting]('REQUEST ROW COUNT') 
+		* 2 
+	from [dbo].[User]
+);
+
+exec [dbo].[p_StageFakeTransactions] @RowsRequested = @RowsRequested;
 go
 
 -- ============================================================================
@@ -156,7 +164,7 @@ if OBJECT_ID('[dbo].[ExecutionLog]') is null
 		[Version] tinyint not null,
 		IsPartitioned BIT NOT NULL,
 		IsSnapshot BIT NOT NULL,
-		[RowCount] int not null,
+		RowsRequested int not null,
 		StartTime datetime2(7) not null,
 		EndTime datetime2(7) not null default sysdatetime(),
 		ErrorMessage varchar(500) null
@@ -166,12 +174,12 @@ go
 create or alter proc [dbo].[p_LogExecution]
 	@RunID smallint, 
 	@UserID tinyint, 
-	@RowCount int, 
+	@RowsRequested int, 
 	@Start datetime2(7), 
 	@ErrorMessage varchar(500) = null
 as
 	/*
-		exec [dbo].[p_LogExecution] @RunID, @UserID, @RowCount, @Start, @ErrorMessage;
+		exec [dbo].[p_LogExecution] @RunID, @UserID, @RowsRequested, @Start, @ErrorMessage;
 	*/
 	declare @Version tinyint = 	[dbo].[p_GetAppSetting]('EXPERIMENT VERSION');
 
@@ -188,10 +196,10 @@ as
 	);
 
 	insert [dbo].[ExecutionLog] (
-		RunID, UserID, [Version], IsPartitioned, IsSnapshot, [RowCount], StartTime, ErrorMessage
+		RunID, UserID, [Version], IsPartitioned, IsSnapshot, RowsRequested, StartTime, ErrorMessage
 	)
 	values (
-		@RunID, @UserID, @Version, @IsPartitioned, @IsSnapshot, @RowCount, @Start, @ErrorMessage
+		@RunID, @UserID, @Version, @IsPartitioned, @IsSnapshot, @RowsRequested, @Start, @ErrorMessage
 	);
 go
 
@@ -227,17 +235,17 @@ create or alter proc [dbo].[p_PerformanceReport] as;
 		AVG(l.[Version]) as [Version],
 		AVG(l.IsPartitioned * 1) AS Is_Partitioned,
 		AVG(l.IsSnapshot * 1) AS Is_Snapshot,
-		AVG(l.[RowCount]) as Row_Count,
+		AVG(l.RowsRequested) as Rows_Requested,
 		COUNT(distinct l.SPID) as [Users],
 		FORMAT(MIN(r.StartTime), 'yyyy-MM-dd HH:mm:ss') as From_Time,
 		CAST(ROUND(DATEDIFF(MILLISECOND, MIN(l.StartTime), MAX(l.EndTime)) / 1000.0, 0) as real) as Secs,
-		SUM(l.[RowCount]) / 1000 as K_Rows,
-		CAST(ROUND(SUM(l.[RowCount]) * 1.0 / DATEDIFF(MILLISECOND, MIN(l.StartTime), MAX(l.EndTime)), 1) as real) as K_Rows_Per_Sec,
+		SUM(l.RowsRequested) / 1000 as K_Rows,
+		CAST(ROUND(SUM(l.RowsRequested) * 1.0 / DATEDIFF(MILLISECOND, MIN(l.StartTime), MAX(l.EndTime)), 1) as real) as K_Rows_Per_Sec,
 		SUM(IIF(l.ErrorMessage is null, 0, 1)) as Errors
 	from #RunGroup r
 	join [dbo].[ExecutionLog] l on l.StartTime between r.StartTime and r.EndTime
 	group by r.Experiment
-	order by r.Experiment;
+	order by r.Experiment desc;
 go
 
 -- ============================================================================
@@ -265,11 +273,12 @@ AS;
 	/*
 		Copy rows from Staging to Transaction and then mark the rows as processed.
 
-		exec [dbo].[p_ProcessTransactions] @UserID = 1;
+		exec [dbo].[p_ProcessTransactions] @RunID = 1, @UserID = 1;
 	*/
-	declare @RowCount int = [dbo].[p_GetAppSetting]('PROCESS TRANSACTIONS ROW COUNT');
+	declare @RowsRequested int = [dbo].[p_GetAppSetting]('REQUEST ROW COUNT');
 	declare @ErrorMessage varchar(MAX);
 	declare @Start datetime2(7) = SYSDATETIME();
+	declare @RowsReturned int;
 
 	declare @Transfer table (StagingValue varchar(200) NOT NULL);
 
@@ -277,7 +286,7 @@ AS;
 		begin tran;
 
 		-- This update must be in a transaction with the insert.
-		update top (@RowCount) targt
+		update top (@RowsRequested) targt
 		set ProcessDate = SYSDATETIME()
 		output inserted.StagingValue 
 		into @Transfer
@@ -285,8 +294,10 @@ AS;
 		where ProcessDate is null
 			and UserID = @UserID;
 
-		if @@ROWCOUNT <> @RowCount begin;
-			set @ErrorMessage = CONCAT(@@ROWCOUNT, ' rows updated. Expected ', @RowCount, '.');
+		set @RowsReturned = @@ROWCOUNT;
+
+		if @RowsReturned <> @RowsRequested begin;
+			set @ErrorMessage = CONCAT(@RowsReturned, ' rows collected. Expected ', @RowsRequested, '.');
 
 			throw 50100, @ErrorMessage, 1;
 		end;
@@ -295,8 +306,10 @@ AS;
 		select @UserID, StagingValue
 		from @Transfer
 
-		if @@ROWCOUNT <> @RowCount begin;
-			set @ErrorMessage = CONCAT(@@ROWCOUNT, ' rows inserted. Expected ', @RowCount, '.');
+		set @RowsReturned = @@ROWCOUNT;
+
+		if @RowsReturned <> @RowsRequested begin;
+			set @ErrorMessage = CONCAT(@RowsReturned, ' rows inserted. Expected ', @RowsRequested, '.');
 
 			throw 50200, @ErrorMessage, 1;
 		end;
@@ -304,7 +317,7 @@ AS;
 		commit;
 
 		-- Stage some more so we don't run out.
-		exec [dbo].[p_StageFakeTransactions] @RowCount, @UserID;
+		exec [dbo].[p_StageFakeTransactions] @RowsRequested, @UserID;
 	end try
 	begin catch;
 		if XACT_STATE() <> 0 rollback;
@@ -315,7 +328,7 @@ AS;
 		print @ErrorMessage;
 	end catch;
 
-	exec [dbo].[p_LogExecution] @RunID, @UserID, @RowCount, @Start, @ErrorMessage;
+	exec [dbo].[p_LogExecution] @RunID, @UserID, @RowsRequested, @Start, @ErrorMessage;
 go
 
 create or alter proc [dbo].[p_RunProcessTransactions] as;
@@ -332,18 +345,28 @@ create or alter proc [dbo].[p_RunProcessTransactions] as;
 	declare @RunLimit int = [dbo].[p_GetAppSetting]('RUN SECONDS LIMIT');
 	declare @End datetime = DATEADD(SECOND, @RunLimit, SYSDATETIME());
 	declare @RunID bigint = NEXT VALUE FOR [dbo].[RunID];
+	declare @ErrorMessage varchar(MAX);
 
-	-- Set the flag and get the ID in one statement so a transaction isn't needed.
-	update top (1) [dbo].[User]
-	set SessionID = @@SPID, @UserID = UserID
-	where SessionID is null;
+	BEGIN TRY;
+		-- Set the flag and get the ID in one statement so a transaction isn't needed.
+		update top (1) [dbo].[User]
+		set SessionID = @@SPID, @UserID = UserID
+		where SessionID is null;
 
-	-- Did we get a user?
-	if @UserID is null throw 50000, 'No users left.', 1;
+		-- Did we get a user?
+		if @UserID is null throw 50000, 'No users left.', 1;
 
-	while @End > SYSDATETIME()
-		exec [dbo].[p_ProcessTransactions] @RunID, @UserID;
+		while @End > SYSDATETIME()
+			exec [dbo].[p_ProcessTransactions] @RunID, @UserID;
+	END TRY
+	BEGIN CATCH;
+		set @ErrorMessage = error_message();
 
-	update [dbo].[User] set SessionID = null where UserID = @UserID;
+		exec [dbo].[p_LogExecution] @RunID, @UserID, NULL, NULL, @ErrorMessage;
+
+		THROW;
+	END CATCH;
+
+	update [dbo].[User] set SessionID = null where UserID = @UserID and SessionID is not null;
 GO
 
