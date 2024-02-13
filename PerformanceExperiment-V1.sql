@@ -21,8 +21,6 @@
 
 		DROP DATABASE [PerformanceExperiment];
 
-		comment added from azure data studio and again
-
 	===========================================================================
 */
 USE [master]
