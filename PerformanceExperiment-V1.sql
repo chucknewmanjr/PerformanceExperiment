@@ -20,6 +20,8 @@
 
 		DROP DATABASE if EXISTS [PerformanceExperiment];
 
+		comment added from azure data studio
+
 	===========================================================================
 */
 USE [master]
