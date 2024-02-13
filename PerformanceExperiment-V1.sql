@@ -21,7 +21,7 @@
 
 		DROP DATABASE [PerformanceExperiment];
 
-		comment added from azure data studio
+		comment added from azure data studio and in github
 
 	===========================================================================
 */
